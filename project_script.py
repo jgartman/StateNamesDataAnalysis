@@ -37,7 +37,7 @@ for i in range(len(table_years)):
             female[i][index] = float(unicodedata.normalize('NFKD',life_table[j].contents[0][1:8]).encode('ascii','ignore'))
 
 #create tables for all years 1910-2016 using interpolation for years where
-#the SSA hasn't actulaly produced tables
+#the SSA hasn't actuallly produced tables
 for i in range(len(ext_male)):
     for j in range(len(male[0])):
         index = i/10 
@@ -46,7 +46,7 @@ for i in range(len(ext_male)):
         ext_male[i][j] = male[index][j] + (diff_m/10.0 )* (i % 10)
         ext_female[i][j] = female[index][j] + (diff_f/10.0) * (i % 10)
         
-import matplotlib.pyplot as plt
+
 
         
         
