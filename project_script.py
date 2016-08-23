@@ -8,6 +8,7 @@ Created on Sat Jul 09 15:59:16 2016
 import pandas
 import unicodedata
 from bs4 import BeautifulSoup
+import math
 
 data_path = "../us-baby-names-release-2015-12-18-00-53-48\output\StateNames.csv"
 table_path = "./Table7_"
@@ -31,12 +32,16 @@ ext_female = [[0 for j in range(NUM_ROW)] for i in range(NUM_YEARS) ]
 
 
 df = pandas.read_csv(data_path)
+df_f = df[df["Gender"] == "F"]
+df_m = df[df["Gender"] == "M"]
+
+state_list = df.State.unique()
 
 for i in range(len(table_years)):
     soup = BeautifulSoup(open(table_path + str(table_years[i]) + ".html"))
     
-    #parse html to get the life table and ignore the first 18 elements which are part of the table
-    #header
+    #parse html to get the life table and ignore the first 18 elements which are 
+    #part of the table header
     life_table = soup.find_all("table")[1].find_all("div")[18:]
     
     for j in range(len(life_table)):
@@ -71,9 +76,37 @@ for i in range(NUM_YEARS):
     male_alive_percent.append(male_percent)
     female_alive_percent.append(female_percent)
     
+#the lookup tables map states to names to total living persons with that name
+#from that state
+lookup_table_m = dict.fromkeys(df.State.unique())
+lookup_table_f = dict.fromkeys(df.State.unique())
+
+#get unique female and male names
+male_names_dict = dict.fromkeys(df[df["Gender"] == "M"].Name.unique(),0)
+female_names_dict = dict.fromkeys(df[df["Gender"] == "F"].Name.unique(),0)
+
+for state in lookup_table_m.keys():
+    lookup_table_m[state] = male_names_dict.copy()
+    lookup_table_f[state] = female_names_dict.copy()
+
+#populate lookup tables
+#for state in lookup_table_m.keys():
+ #   for name in lookup_table_m[state].keys():
+        
+def get_pop_name(name, gender, state):
+    assert(gender == "M" or gender == "F")
+    assert(state in state_list)
+    if(gender == "M"):
+        name_data = df_m
+        percent_alive_table = male_alive_percent
+    else:
+        name_data = df_f
+        percent_alive_table = female_alive_percent
+    result = 0
+    for i in range(104):
+        year_state_table = name_data[(name_data["Year"] == (1910 + i)) &(name_data["State"] == state)]
+        if name in year_state_table.Name.get_values():
+            result += year_state_table[year_state_table["Name"] == name].Count.get_values()[0]*percent_alive_table[i]
+    return math.floor(result)
     
-
-
-
-        
-        
+     
