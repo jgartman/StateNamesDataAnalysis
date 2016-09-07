@@ -108,5 +108,32 @@ def get_pop_name(name, gender, state):
         if name in year_state_table.Name.get_values():
             result += year_state_table[year_state_table["Name"] == name].Count.get_values()[0]*percent_alive_table[i]
     return math.floor(result)
+
+#come up with a better name for this
+data_struct_m = [[None for j in range(51)] for i in range(105)]
+prev_year = 1910
+cur_year_index = 0
+prev_state = "AK"
+cur_state_index = 0
+begin_index = 0
+end_index = 0
+for i in range(len(df_m)):
+    if df_m.iloc[i].Year != prev_year and df_m.iloc[i].State == prev_state:
+        end_index = i
+        data_struct_m[cur_year_index][cur_state_index] = (begin_index, end_index)
+        begin_index = i
+        prev_year = df_m.iloc[i].Year
+        cur_year_index += 1
+    elif df_m.iloc[i].State != prev_state:
+        end_index = i
+        data_struct_m[cur_year_index][cur_state_index] = (begin_index, end_index)
+        begin_index = i
+        prev_state = df_m.iloc[i].State
+        prev_year = 1910
+        cur_year_index = 0
+        cur_state_index += 1
+        
+        
+    
     
      
