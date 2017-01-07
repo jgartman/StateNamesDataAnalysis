@@ -10,7 +10,6 @@ import unicodedata
 from bs4 import BeautifulSoup
 import math
 import pickle
-import numpy
 
 data_path = "../us-baby-names-release-2015-12-18-00-53-48/output/StateNames.csv"
 table_path = "./Table7_"
@@ -182,7 +181,7 @@ def get_pop_name(name, gender, state, data_struct):
             result += year_state_table[year_state_table["Name"] == name].Count.get_values()[0]*percent_alive_table[i]
     return math.floor(result)
 
-f = [[get_pop_name(name, "F", state, index_struct_m) for state in state_list] for name in name_list_f]
+f = [[get_pop_name(name, "F", state, index_struct_f) for state in state_list] for name in name_list_f]
       
 df_final_f = pandas.DataFrame(f)
 df_final_f.columns = state_list
