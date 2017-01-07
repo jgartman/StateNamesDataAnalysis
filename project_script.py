@@ -9,6 +9,9 @@ import pandas
 import unicodedata
 from bs4 import BeautifulSoup
 import math
+import pickle
+import xlswriter
+import numpy
 
 data_path = "../us-baby-names-release-2015-12-18-00-53-48\output\StateNames.csv"
 table_path = "./Table7_"
@@ -34,6 +37,65 @@ ext_female = [[0 for j in range(NUM_ROW)] for i in range(NUM_YEARS) ]
 df = pandas.read_csv(data_path)
 df_f = df[df["Gender"] == "F"]
 df_m = df[df["Gender"] == "M"]
+                  
+#comment out below if data_struct_f and data_struct_m not perviously constructed
+                
+index_struct_m = pickle.load(open( "df_m_save.p", "r" ))
+index_struct_f = pickle.load(open( "df_f_save.p", "r" ))
+
+#uncomment below if data_struct_f and data_struct_m not perviously constructed
+ 
+
+#data_struct_m = [[None for j in range(51)] for i in range(105)]
+#data_struct_f = [[None for j in range(51)] for i in range(105)]             
+#prev_year = 1910
+#cur_year_index = 0
+#prev_state = "AK"
+#cur_state_index = 0
+#begin_index = 0
+#end_index = 0
+##create tables that will make get_pop_name function more efficient
+#for i in range(len(df_f)):
+#    if df_f.iloc[i].Year != prev_year and df_f.iloc[i].State == prev_state:
+#        end_index = i
+#        data_struct_f[cur_year_index][cur_state_index] = (begin_index, end_index)
+#        begin_index = i
+#        prev_year = df_f.iloc[i].Year
+#        cur_year_index += 1
+#    if df_f.iloc[i].Year != prev_year and df_f.iloc[i].State != prev_state:
+#        end_index = i
+#        data_struct_f[cur_year_index][cur_state_index] = (begin_index, end_index)
+#        begin_index = i
+#        prev_state = df_f.iloc[i].State
+#        prev_year = 1910
+#        cur_year_index = 0
+#        cur_state_index += 1
+#        
+#prev_year = 1910
+#cur_year_index = 0
+#prev_state = "AK"
+#cur_state_index = 0
+#begin_index = 0
+#end_index = 0
+##create tables that will make get_pop_name function more efficient
+#for i in range(len(df_m)):
+#    if df_m.iloc[i].Year != prev_year and df_m.iloc[i].State == prev_state:
+#        end_index = i
+#        data_struct_m[cur_year_index][cur_state_index] = (begin_index, end_index)
+#        begin_index = i
+#        prev_year = df_m.iloc[i].Year
+#        cur_year_index += 1
+#    if df_m.iloc[i].Year != prev_year and df_m.iloc[i].State != prev_state:
+#        end_index = i
+#        data_struct_m[cur_year_index][cur_state_index] = (begin_index, end_index)
+#        begin_index = i
+#        prev_state = df_m.iloc[i].State
+#        prev_year = 1910
+#        cur_year_index = 0
+#        cur_state_index += 1
+#
+#pickle.dump(data_struct_f, open( "df_f_save.p", "wb" ) )
+#pickle.dump(data_struct_m, open( "df_m_save.p", "wb" ) )
 
 state_list = df.State.unique()
 
@@ -78,22 +140,33 @@ for i in range(NUM_YEARS):
     
 #the lookup tables map states to names to total living persons with that name
 #from that state
-lookup_table_m = dict.fromkeys(df.State.unique())
-lookup_table_f = dict.fromkeys(df.State.unique())
-
-#get unique female and male names
-male_names_dict = dict.fromkeys(df[df["Gender"] == "M"].Name.unique(),0)
-female_names_dict = dict.fromkeys(df[df["Gender"] == "F"].Name.unique(),0)
-
-for state in lookup_table_m.keys():
-    lookup_table_m[state] = male_names_dict.copy()
-    lookup_table_f[state] = female_names_dict.copy()
+#lookup_table_m = dict.fromkeys(df.State.unique())
+#lookup_table_f = dict.fromkeys(df.State.unique())
+#
+##get unique female and male names
+#male_names_dict = dict.fromkeys(df[df["Gender"] == "M"].Name.unique(),0)
+#female_names_dict = dict.fromkeys(df[df["Gender"] == "F"].Name.unique(),0)
+#
+#for state in lookup_table_m.keys():
+#    lookup_table_m[state] = male_names_dict.copy()
+#    lookup_table_f[state] = female_names_dict.copy()
 
 #populate lookup tables
 #for state in lookup_table_m.keys():
  #   for name in lookup_table_m[state].keys():
-        
-def get_pop_name(name, gender, state):
+     
+state_list = df["State"].unique()
+s = dict.fromkeys(state_list)
+
+name_list_f = df_f["Name"].unique()
+name_list_m = df_m["Name"].unique()
+
+
+for i in range(len(s)):
+    s[state_list[i]] = i
+    
+def get_pop_name(name, gender, state, data_struct):
+    state_i = s[state]
     assert(gender == "M" or gender == "F")
     assert(state in state_list)
     if(gender == "M"):
@@ -104,36 +177,29 @@ def get_pop_name(name, gender, state):
         percent_alive_table = female_alive_percent
     result = 0
     for i in range(104):
-        year_state_table = name_data[(name_data["Year"] == (1910 + i)) &(name_data["State"] == state)]
+        indices = data_struct[i][state_i]
+        year_state_table = name_data[indices[0]:indices[1]]
         if name in year_state_table.Name.get_values():
             result += year_state_table[year_state_table["Name"] == name].Count.get_values()[0]*percent_alive_table[i]
     return math.floor(result)
 
-#come up with a better name for this
-data_struct_m = [[None for j in range(51)] for i in range(105)]
-prev_year = 1910
-cur_year_index = 0
-prev_state = "AK"
-cur_state_index = 0
-begin_index = 0
-end_index = 0
-for i in range(len(df_m)):
-    if df_m.iloc[i].Year != prev_year and df_m.iloc[i].State == prev_state:
-        end_index = i
-        data_struct_m[cur_year_index][cur_state_index] = (begin_index, end_index)
-        begin_index = i
-        prev_year = df_m.iloc[i].Year
-        cur_year_index += 1
-    elif df_m.iloc[i].State != prev_state:
-        end_index = i
-        data_struct_m[cur_year_index][cur_state_index] = (begin_index, end_index)
-        begin_index = i
-        prev_state = df_m.iloc[i].State
-        prev_year = 1910
-        cur_year_index = 0
-        cur_state_index += 1
-        
-        
-    
-    
-     
+f = [[get_pop_name(name, "F", state, index_struct_m) for state in state_list] for name in name_list_f]
+      
+df_final_f = pandas.DataFrame(f)
+df_final_f.columns = state_list
+df_final_f.index = name_list_f
+writer_f = pandas.ExcelWriter('processed_data_f.xlsx', engine='xlsxwriter')
+df_final_f.to_excel(writer_f)
+writer_f.save()
+
+del f
+del df_final_f
+
+m = [[get_pop_name(name, "M", state, index_struct_m) for state in state_list] for name in name_list_m]      
+
+df_final_m = pandas.DataFrame(m)
+df_final_m.columns = state_list
+df_final_m.index = name_list_m
+writer_m = pandas.ExcelWriter('processed_data_m.xlsx', engine='xlsxwriter')
+df_final_m.to_excel(writer_m)
+writer_m.save()
