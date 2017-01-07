@@ -10,10 +10,9 @@ import unicodedata
 from bs4 import BeautifulSoup
 import math
 import pickle
-import xlswriter
 import numpy
 
-data_path = "../us-baby-names-release-2015-12-18-00-53-48\output\StateNames.csv"
+data_path = "../us-baby-names-release-2015-12-18-00-53-48/output/StateNames.csv"
 table_path = "./Table7_"
 table_years = [1910,1920,1930,1940,1950,1960,1970,1980,1990,2000,2010,2020]
 
